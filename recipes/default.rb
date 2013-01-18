@@ -1,11 +1,11 @@
-chef_gem 'pg'
-
 class Chef::Recipe
   include Chef::Rails::UserHelpers
   include Chef::Rails::DatabaseHelpers
   include Chef::Rails::DeployHelpers
   include Chef::Rails::PackagesHelpers
 end
+
+include_recipe "postgresql::ruby"
 
 # Install all rubies versions from all rails apps
 install_rubies
