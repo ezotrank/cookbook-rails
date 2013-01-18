@@ -1,0 +1,85 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          <%= @application_name %>
+# Required-Start:    $all
+# Required-Stop:     $network $local_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start the <%= @application_name %> unicorns at boot
+# Description:       Enable <%= @application_name %> at boot time.
+### END INIT INFO
+
+set -u
+set -e
+
+# Change these to match your app:
+APP_NAME="<%= @application_name %>"
+APP_ROOT="<%= File.join(@root_folder, 'current') %>"
+PID="<%= File.join(@root_folder, '/shared/pids/unicorn.pid') %>"
+ENV="<%= @rails_env %>"
+
+UNICORN_OPTS="-D -E $ENV -c $APP_ROOT/config/unicorn/chef_unicorn.rb"
+
+SET_PATH="cd $APP_ROOT"
+CMD="$SET_PATH; ./script/rvm_wrapper.sh bundle exec unicorn $UNICORN_OPTS"
+
+old_pid="$PID.oldbin"
+
+cd $APP_ROOT || exit 1
+
+sig () {
+    test -s "$PID" && kill -$1 `cat $PID`
+}
+
+oldsig () {
+    test -s $old_pid && kill -$1 `cat $old_pid`
+}
+
+start_unicorn () {
+    if [ `whoami` != <%= @user %> ]; then
+        su - <%= @user %> -c "$CMD"
+    else
+        bash -c "$CMD"
+    fi
+}
+
+case ${1-help} in
+    start)
+        sig 0 && echo >&2 "Already running" && exit 0
+	start_unicorn
+        ;;
+    stop)
+        sig QUIT && exit 0
+        echo >&2 "Not running"
+        ;;
+    force-stop)
+        sig TERM && exit 0
+        echo >&2 "Not running"
+        ;;
+    restart)
+        if [ -s "$PID" ]; then
+            kill -TERM `cat $PID`
+	fi
+	    start_unicorn
+        ;;
+    reload)
+	if [ -s "$PID" ]; then
+            kill -USR2 `cat $PID`
+	else
+	    start_unicorn
+	fi
+        ;;
+    upgrade)
+        sig USR2 && exit 0
+        echo >&2 "Couldn't upgrade, starting '$CMD' instead"
+	start_unicorn
+        ;;
+    rotate)
+        sig USR1 && echo rotated logs OK && exit 0
+        echo >&2 "Couldn't rotate logs" && exit 1
+        ;;
+    *)
+        echo >&2 "Usage: $0 <start|stop|restart|upgrade|rotate|force-stop>"
+        exit 1
+        ;;
+esac
