@@ -3,11 +3,9 @@ app_dir = "<%= @root_folder %>"
 # Set unicorn options
 worker_processes <%= @unicorn_workers %>
 preload_app true
-GC.respond_to?(:copy_on_write_friendly=) and GC.copy_on_write_friendly = true
-check_client_connection false
 timeout 30
 pid "#{app_dir}/shared/pids/unicorn.pid"
-listen "#{app_dir}/shared/pids/unicorn.sock", :backlog => 64
+listen 3000, :tcp_nopush => true
 
 # Log everything to one file
 stderr_path "#{app_dir}/shared/log/unicorn.log"

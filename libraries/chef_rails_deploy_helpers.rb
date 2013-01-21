@@ -64,7 +64,7 @@ class Chef
                       })
           shallow_clone true
           migrate true
-          migration_command "./script/rvm_wrapper.sh bundle exec rake db:migrate"
+          migration_command "./script/rvm_wrapper.sh bundle exec rake db:migrate --trace"
           restart_command "/etc/init.d/#{app['id']}_#{env['name']} restart"
           before_migrate do
 
@@ -77,22 +77,22 @@ class Chef
               backup false
             end
 
-            rvm_shell "Bundle install and assets precompile" do
+            rvm_shell "Bundle install" do
               ruby_string env['ruby_version']
               cwd release_path
               user env['user']['login']
               group env['user']['login']
-              common_groups = %w{development test cucumber staging}
+              common_groups = env['bundle_without']
 
               code %{
-                bundle install --deployment --path #{File.join env['folder'], 'shared/bundle'} --without #{common_groups.join(' ')}
+                bundle install --deployment --path #{File.join env['folder'], 'shared/bundle'} --without #{common_groups}
               }
             end
 
             sql_server_connection_info = { :host => "localhost",
-                                           :port => 5432,
-                                           :username => 'postgres',
-                                           :password => node['postgresql']['password']['postgres']}
+              :port => 5432,
+              :username => 'postgres',
+              :password => node['postgresql']['password']['postgres']}
 
             postgresql_database_user "#{env['database']['username']}" do
               connection sql_server_connection_info
@@ -141,7 +141,7 @@ class Chef
 
             if tasks
               execute "Load seeds" do
-                command "./script/rvm_wrapper.sh bundle exec rake RAILS_ENV=#{env['name']} #{tasks}"
+                command "./script/rvm_wrapper.sh bundle exec rake RAILS_ENV=#{env['name']} #{tasks} --trace"
                 cwd release_path
                 user env['user']['login']
                 group env['user']['login']
@@ -149,18 +149,62 @@ class Chef
               end
             end
 
-            # Update Unicorn config
-            template File.join(release_path, 'config/unicorn/chef_unicorn.rb') do
-              source "unicorn_config.rb.erb"
-              variables(
-              :root_folder => env['folder'],
-              :unicorn_workers => env['unicorn_workers']
-              )
+            directory File.join(release_path, 'config/unicorn') do
               owner env['user']['login']
               group env['user']['login']
-              mode "0644"
-              backup false
+              mode 0755
+              action :create
             end
+
+            if env['development_mode'] == true
+              template File.join(release_path, 'config/unicorn/chef_unicorn.rb') do
+                source "unicorn_config_development.rb.erb"
+                variables(
+                :root_folder => env['folder'],
+                :unicorn_workers => env['unicorn_workers']
+                )
+                owner env['user']['login']
+                group env['user']['login']
+                mode "0644"
+                backup false
+              end
+            else
+              # Update Unicorn config
+              template File.join(release_path, 'config/unicorn/chef_unicorn.rb') do
+                source "unicorn_config.rb.erb"
+                variables(
+                :root_folder => env['folder'],
+                :unicorn_workers => env['unicorn_workers']
+                )
+                owner env['user']['login']
+                group env['user']['login']
+                mode "0644"
+                backup false
+              end
+
+              # Assets precompile
+              execute "Assets precompile" do
+                command "./script/rvm_wrapper.sh bundle exec rake RAILS_ENV=#{env['name']} assets:precompile"
+                cwd release_path
+                user env['user']['login']
+                group env['user']['login']
+              end
+
+              # Change nginx config
+              template File.join('/etc/nginx/conf.d', "#{app['id']}_#{env['name']}.conf") do
+                source "nginx_site.conf.erb"
+                variables(
+                :app_name => "#{app['id']}_#{env['name']}.conf",
+                :urls => env['urls'],
+                :root_folder => env['folder'],
+                )
+                owner 'root'
+                group 'root'
+                mode "0644"
+                backup false
+              end
+            end
+
 
             # Update init script
             template File.join('/etc/init.d', "#{app['id']}_#{env['name']}") do
@@ -175,28 +219,6 @@ class Chef
               owner env['user']['login']
               group env['user']['login']
               mode "0755"
-              backup false
-            end
-
-            # Assets precompile
-            execute "Assets precompile" do
-              command "./script/rvm_wrapper.sh bundle exec rake RAILS_ENV=#{env['name']} assets:precompile"
-              cwd release_path
-              user env['user']['login']
-              group env['user']['login']
-            end
-
-            # Change nginx config
-            template File.join('/etc/nginx/conf.d', "#{app['id']}_#{env['name']}.conf") do
-              source "nginx_site.conf.erb"
-              variables(
-              :app_name => "#{app['id']}_#{env['name']}.conf",
-              :urls => env['urls'],
-              :root_folder => env['folder'],
-              )
-              owner 'root'
-              group 'root'
-              mode "0644"
               backup false
             end
 
