@@ -147,7 +147,10 @@ class Chef
 
             execute "stop application service - #{app['id']}_#{env['name']} stop" do
               command "/etc/init.d/#{app['id']}_#{env['name']} stop &>> #{deploy_log}"
-              only_if { FileTest.exist?("/etc/init.d/#{app['id']}_#{env['name']}") }
+              only_if do
+                ::File.exist?("/etc/init.d/#{app['id']}_#{env['name']}") &&
+                  ::File.exist?(File.join(env['folder'], 'shared/pids/unicorn.pid'))
+              end
             end if env['flush_db'] && env['flush_db'] == true
 
             postgresql_database env['database']['name'] do
@@ -159,9 +162,6 @@ class Chef
           end
 
           before_restart do
-
-
-
 
             execute "Load seed data" do
               command "#{wrapper_path} bundle exec rake RAILS_ENV=#{env['name']} db:seed --trace &>> #{deploy_log}"
