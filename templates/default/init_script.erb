@@ -21,7 +21,7 @@ ENV="<%= @rails_env %>"
 UNICORN_OPTS="-D -E $ENV -c $APP_ROOT/config/unicorn/chef_unicorn.rb"
 
 SET_PATH="cd $APP_ROOT"
-CMD="$SET_PATH; ./script/rvm_wrapper.sh bundle exec unicorn $UNICORN_OPTS"
+CMD="$SET_PATH; ../../shared/scripts/rvm_wrapper.sh bundle exec unicorn $UNICORN_OPTS"
 
 old_pid="$PID.oldbin"
 
@@ -50,6 +50,10 @@ case ${1-help} in
         ;;
     stop)
         sig QUIT && exit 0
+        echo >&2 "Not running"
+        ;;
+    kill)
+        sig KILL && exit 0
         echo >&2 "Not running"
         ;;
     force-stop)

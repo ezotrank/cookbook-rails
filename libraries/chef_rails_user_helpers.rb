@@ -23,7 +23,7 @@ class Chef
     module UserHelpers
 
       def ssh_strick_key(login)
-        execute "bla bla" do
+        execute "Strick KnowHost key checking" do
           user login
           group login
           cwd "/home/#{login}"
@@ -45,7 +45,7 @@ class Chef
 	    members params['login']
 	    append true
 	  end
-	end
+	end if params['groups']
 
         execute "add id_rsa.pub" do
           command <<-EOF

@@ -38,7 +38,7 @@ class Chef
         end
       end
 
-      def create_database(database)
+      def create_database(database, vagrant=false)
         sql_server_connection_info = { :host => "localhost",
           :port => 5432,
           :username => 'postgres',
@@ -55,6 +55,12 @@ class Chef
           owner database['username']
           action :create
         end
+
+        postgresql_database "grant permission to createdb for vagrant user" do
+          connection sql_server_connection_info
+          sql "ALTER USER #{database['username']} SUPERUSER;"
+          action :query
+        end if vagrant
       end
 
       def drop_database(database)

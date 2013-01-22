@@ -35,9 +35,10 @@ class Chef
       # Install all versions of ruby
       def install_rubies
         rubies = []
-        node.rails_apps.each do |app|
+        node['rails_apps'].each do |app|
           rubies << data_bag_item('rails_apps', app)['environments'].map {|e| e['ruby_version']}
         end
+        return if rubies.empty?
         rubies = rubies.flatten.uniq
         node.set['rvm']['rubies'] = rubies
         node.set['rvm']['branch']  = "stable"
@@ -45,7 +46,7 @@ class Chef
       end
 
       def install_imagemagick
-        node.rails_apps.each do |app|
+        node['rails_apps'].each do |app|
           if data_bag_item('rails_apps', app)['imagemagick']
             package 'ImageMagick'
             package 'ImageMagick-devel'
