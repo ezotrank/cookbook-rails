@@ -22,6 +22,42 @@ class Chef
   module Rails
     module DeployHelpers
 
+      def write_init_script(app, env)
+        template File.join('/etc/init.d', "#{app['id']}_#{env['name']}") do
+          source "init_script.erb"
+          variables(
+          :application_name => app['id'],
+          :root_folder      => env['folder'],
+          :rails_env        => env['name'],
+          :ruby_version     => env['ruby_version'],
+          :user             => env['user']['login']
+          )
+          owner env['user']['login']
+          group env['user']['login']
+          mode "0755"
+          backup false
+        end
+      end
+
+      def write_nginx_config(app, env)
+        # Change nginx config
+        template File.join('/etc/nginx/conf.d', "#{app['id']}_#{env['name']}.conf") do
+          source "nginx_site.conf.erb"
+          variables(
+          :app_name    => "#{app['id']}_#{env['name']}.conf",
+          :urls        => env['urls'],
+          :root_folder => env['folder']
+          )
+          owner 'root'
+          group 'root'
+          mode "0644"
+          backup false
+
+          notifies :reload, resources(:service => "nginx")
+          only_if { ::File.exist?('/etc/init.d/nginx') }
+        end
+      end
+
       def create_necessary_folders(env)
         user_name = env['user']['login']
         group_name = env['user']['login']
@@ -53,9 +89,9 @@ class Chef
 
       def deploy_project(app, env)
         sql_server_connection_info = { :host => "localhost",
-                                       :port => 5432,
-                                       :username => 'postgres',
-                                       :password => node['postgresql']['password']['postgres']}
+          :port => 5432,
+          :username => 'postgres',
+          :password => node['postgresql']['password']['postgres']}
         wrapper_path = File.join(env['folder'], 'shared/scripts/rvm_wrapper.sh')
         deploy_log = File.join(env['folder'], 'shared/log/deploy.log')
         execute "echo -E #{deploy_log}"
@@ -124,21 +160,7 @@ class Chef
 
           before_restart do
 
-            # Update init script
-            template File.join('/etc/init.d', "#{app['id']}_#{env['name']}") do
-              source "init_script.erb"
-              variables(
-              :application_name => app['id'],
-              :root_folder => env['folder'],
-              :rails_env => env['name'],
-              :ruby_version => env['ruby_version'],
-              :user => env['user']['login']
-              )
-              owner env['user']['login']
-              group env['user']['login']
-              mode "0755"
-              backup false
-            end
+
 
 
             execute "Load seed data" do
@@ -197,19 +219,6 @@ class Chef
                 group env['user']['login']
               end
 
-              # Change nginx config
-              template File.join('/etc/nginx/conf.d', "#{app['id']}_#{env['name']}.conf") do
-                source "nginx_site.conf.erb"
-                variables(
-                :app_name => "#{app['id']}_#{env['name']}.conf",
-                :urls => env['urls'],
-                :root_folder => env['folder']
-                )
-                owner 'root'
-                group 'root'
-                mode "0644"
-                backup false
-              end
             end
 
           end
