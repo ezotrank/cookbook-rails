@@ -112,7 +112,7 @@ class Chef
           :password => node['postgresql']['password']['postgres']}
         wrapper_path = File.join(env['folder'], 'shared/scripts/rvm_wrapper.sh')
         deploy_log = File.join(env['folder'], 'shared/log/deploy.log')
-        execute "echo -E #{deploy_log}"
+        execute "echo -E > #{deploy_log}"
 
         deploy_revision env['folder'] do
           repo app['repo']
@@ -130,11 +130,12 @@ class Chef
           restart_command "/etc/init.d/#{app['id']}_#{env['name']} restart &>> #{deploy_log}"
 
           before_migrate do
+
             execute "Bundle install" do
               command <<-eos
-                       #{wrapper_path} bundle install --deployment \
+                       #{wrapper_path} bundle install --gemfile #{File.join(release_path, 'Gemfile')} \
                                                       --path #{File.join env['folder'], 'shared/bundle'} \
-                                                      --without #{env['bundle_without']} &>> #{deploy_log}
+                                                      --deployment --without #{env['bundle_without']} &>> #{deploy_log}
                       eos
               cwd release_path
               user env['user']['login']
