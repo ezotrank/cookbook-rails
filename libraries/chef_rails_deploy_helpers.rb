@@ -55,6 +55,11 @@ class Chef
           mode "0755"
           backup false
         end
+
+        service "#{app['id']}_#{env['name']}" do
+          supports :status => true, :restart => true, :reload => true
+          action :enable
+        end
       end
 
       def write_nginx_config(app, env)
