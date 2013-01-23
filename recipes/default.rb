@@ -30,6 +30,7 @@ node['rails_apps'].each do |app|
     if env['vagrant']
       include_recipe "rails::vagrant"
     else
+      create_rvm_wrapper(env)
       write_init_script(rails_app, env)
       write_nginx_config(rails_app, env)
       deploy_project(rails_app, env)

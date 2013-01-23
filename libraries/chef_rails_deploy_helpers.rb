@@ -22,6 +22,24 @@ class Chef
   module Rails
     module DeployHelpers
 
+      def create_rvm_wrapper(env)
+        directory File.join(env['folder'], 'shared/scripts') do
+          owner env['user']['login']
+          group env['user']['login']
+          mode 0755
+          action :create
+        end
+
+        template File.join(env['folder'], 'shared/scripts/rvm_wrapper.sh') do
+          source "rvm_wrapper.sh.erb"
+          variables(:ruby_version => env['ruby_version'])
+          owner env['user']['login']
+          group env['user']['login']
+          mode "0755"
+          backup false
+        end
+      end
+
       def write_init_script(app, env)
         template File.join('/etc/init.d', "#{app['id']}_#{env['name']}") do
           source "init_script.erb"
@@ -112,22 +130,6 @@ class Chef
           restart_command "/etc/init.d/#{app['id']}_#{env['name']} restart &>> #{deploy_log}"
 
           before_migrate do
-            directory File.join(env['folder'], 'shared/scripts') do
-              owner env['user']['login']
-              group env['user']['login']
-              mode 0755
-              action :create
-            end
-
-            template wrapper_path do
-              source "rvm_wrapper.sh.erb"
-              variables(:ruby_version => env['ruby_version'])
-              owner env['user']['login']
-              group env['user']['login']
-              mode "0755"
-              backup false
-            end
-
             execute "Bundle install" do
               command <<-eos
                        #{wrapper_path} bundle install --deployment \
