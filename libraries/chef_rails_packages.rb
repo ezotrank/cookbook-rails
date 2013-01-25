@@ -35,9 +35,12 @@ class Chef
       # Install all versions of ruby
       def install_rubies
         rubies = []
-        node['rails_apps'].each do |app|
-          rubies << data_bag_item('rails_apps', app)['environments'].map {|e| e['ruby_version']}
+        node['rails_apps'].each do |rails_app|
+          data_bag_item('rails_apps', rails_app['name'])['environments'].each do |env|
+            rubies << env['ruby_version'] if rails_app['env'].include?(env['name'])
+          end
         end
+        Chef::Log.info "This ruby versions will be installed on this nido #{rubies}"
         return if rubies.empty?
         rubies = rubies.flatten.uniq
         node.set['rvm']['rubies'] = rubies
@@ -46,8 +49,8 @@ class Chef
       end
 
       def install_imagemagick
-        node['rails_apps'].each do |app|
-          if data_bag_item('rails_apps', app)['imagemagick']
+        node['rails_apps'].each do |rails_app|
+          if data_bag_item('rails_apps', rails_app['name'])['imagemagick']
             package 'ImageMagick'
             package 'ImageMagick-devel'
             break

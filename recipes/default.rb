@@ -14,10 +14,10 @@ install_rubies
 install_imagemagick
 
 node['rails_apps'].each do |app|
-  puts "App Name: #{app}"
 
-  rails_app = data_bag_item('rails_apps', app)
-  rails_app['environments'].each do |env|
+  rails_app = data_bag_item('rails_apps', app['name'])
+  rails_app['environments'].map {|h| h if app['env'].include?(h['name'])}.compact.each do |env|
+
     unless env['vagrant']
       create_user(env['user'])
       ssh_strick_key(env['user']['login'])

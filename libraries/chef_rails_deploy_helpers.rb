@@ -230,8 +230,19 @@ class Chef
             end
 
           end
-        end
 
+          after_restart do
+
+            # Create symlink to home direcory
+            link File.join('/home', env['user']['login'], "#{app['id']}_#{env['name']}") do
+              to env['folder']
+              user env['user']['login']
+              group env['user']['login']
+            end
+
+          end
+
+        end
       end
     end
   end
