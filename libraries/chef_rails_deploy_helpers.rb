@@ -63,22 +63,25 @@ class Chef
       end
 
       def write_nginx_config(app, env)
+        config_file = File.join('/etc/nginx/sites-available', "#{app['id']}_#{env['name']}.conf")
         # Change nginx config
-        template File.join('/etc/nginx/conf.d', "#{app['id']}_#{env['name']}.conf") do
+        template config_file do
           source "nginx_site.conf.erb"
           variables(
-          :app_name    => "#{app['id']}_#{env['name']}.conf",
-          :urls        => env['urls'],
-          :root_folder => env['folder']
+          :app_name      => "#{app['id']}_#{env['name']}.conf",
+          :urls          => env['urls'],
+          :root_folder   => env['folder'],
+          :nginx_server  => env['nginx_server']
           )
           owner 'root'
           group 'root'
           mode "0644"
           backup false
 
-          notifies :reload, resources(:service => "nginx")
           only_if { ::File.exist?('/etc/init.d/nginx') }
         end
+
+        nginx_site File.basename(config_file)
       end
 
       def create_necessary_folders(env)

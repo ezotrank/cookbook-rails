@@ -7,6 +7,9 @@ server {
     server_name  <%= @urls.join(' ') %>;
     charset utf-8;
     root <%= @root_folder %>/current/public;
+    <% @nginx_server.each do |k, v| %>
+    <%= k %> <%= v %>;
+    <% end if @nginx_server %>
 
     location ~ ^/assets|system/.*-(.*)\..* {
         gzip_static on;

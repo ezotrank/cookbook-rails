@@ -9,9 +9,9 @@ version          "0.0.3"
 
 depends 'database'
 depends 'postgresql'
+depends 'nginx'
 
 supports "centos"
 
 recommends "rvm"
-recommends "nginx"
 recommends "yum"
