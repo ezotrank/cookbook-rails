@@ -102,7 +102,7 @@ class Chef
           action :create
         end
 
-        ['shared', 'shared/log', 'shared/system', 'shared/pids', 'shared/config'].each do |folder_name|
+        ['shared', 'shared/log', 'shared/system', 'shared/pids', 'shared/config', 'shared/assets'].each do |folder_name|
           directory File.join(env['folder'], folder_name) do
             owner user_name
             group group_name
@@ -122,7 +122,7 @@ class Chef
         deploy_log = File.join(env['folder'], 'shared/log/deploy.log')
         execute "echo -E > #{deploy_log}"
 
-        deploy_revision env['folder'] do
+        deploy env['folder'] do
           repo app['repo']
           revision env['revision']
           user env['user']['login']
@@ -136,8 +136,14 @@ class Chef
           migrate true
           migration_command "#{wrapper_path} bundle exec rake db:migrate --trace &>> #{deploy_log}"
           restart_command "/etc/init.d/#{app['id']}_#{env['name']} restart &>> #{deploy_log}"
+          symlinks "system" => "public/system",
+                   "pids"   => "tmp/pids",
+                   "log"    => "log",
+                   "assets" => "public/assets"
 
           before_migrate do
+
+            run "git rev-parse HEAD > version"
 
             execute "Bundle install" do
               command <<-eos
@@ -223,13 +229,13 @@ class Chef
               end
 
               # Assets precompile
-              execute "Assets precompile" do
-                command "#{wrapper_path} bundle exec rake RAILS_ENV=#{env['name']} assets:precompile --trace &>> #{deploy_log}"
-                cwd release_path
-                user env['user']['login']
-                group env['user']['login']
+              if all_releases.size < 2 ||
+                  `cd #{release_path} && git log $(cat #{previous_release_path}/version).. vendor/assets app/assets | wc -l`.to_i > 0
+                Chef::Log.info "We found changes in assets, let's recompile their"
+                run "#{wrapper_path} bundle exec rake assets:precompile --trace &>> #{deploy_log}"
+              else
+                Chef::Log.info "Not changes in assets"
               end
-
             end
 
           end
