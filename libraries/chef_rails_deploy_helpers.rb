@@ -122,7 +122,7 @@ class Chef
         deploy_log = File.join(env['folder'], 'shared/log/deploy.log')
         execute "echo -E > #{deploy_log}"
 
-        deploy env['folder'] do
+        deploy_revision env['folder'] do
           repo app['repo']
           revision env['revision']
           user env['user']['login']
