@@ -229,7 +229,10 @@ class Chef
               end
 
               # Assets precompile
-              if all_releases.size < 2 ||
+              # We should recompile assets when count of all releases < 2,
+              # if shared assets folder is blank and if in new relase has
+              # something new in folders vendor/assets or app/assets
+              if all_releases.size < 2 || `ls #{env['folder']}/shared/assets|wc -l`.to_i <= 0 ||
                   `cd #{release_path} && git log $(cat #{previous_release_path}/version).. vendor/assets app/assets | wc -l`.to_i > 0
                 Chef::Log.info "We found changes in assets, let's recompile their"
                 run "#{wrapper_path} bundle exec rake assets:precompile --trace &>> #{deploy_log}"
