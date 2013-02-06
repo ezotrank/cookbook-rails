@@ -62,27 +62,6 @@ class Chef
         end
       end
 
-      def write_nginx_config(app, env)
-        config_file = File.join('/etc/nginx/sites-available', "#{app['id']}_#{env['name']}.conf")
-        # Change nginx config
-        template config_file do
-          source "nginx_site.conf.erb"
-          variables(
-          :app_name      => "#{app['id']}_#{env['name']}.conf",
-          :urls          => env['urls'],
-          :root_folder   => env['folder'],
-          :nginx_server  => env['nginx_server']
-          )
-          owner 'root'
-          group 'root'
-          mode "0644"
-          backup false
-
-          only_if { ::File.exist?('/etc/init.d/nginx') }
-        end
-
-        nginx_site File.basename(config_file)
-      end
 
       def create_necessary_folders(env)
         user_name = env['user']['login']
@@ -244,6 +223,13 @@ class Chef
           end
 
           after_restart do
+
+            # Update crontab
+            run "Update crontab" do
+              command "#{wrapper_path} bundle exec whenever -w #{env['folder']}/current &>> #{deploy_log}"
+              only_if { ::File.exist?("#{release_path}/config/schedule.rb") &&
+                "cd #{release_path} && #{wrapper_path} bundle list| grep whenever" }
+            end
 
             # Create symlink to home direcory
             link File.join('/home', env['user']['login'], "#{app['id']}_#{env['name']}") do

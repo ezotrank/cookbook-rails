@@ -3,6 +3,7 @@ class Chef::Recipe
   include Chef::Rails::DatabaseHelpers
   include Chef::Rails::DeployHelpers
   include Chef::Rails::PackagesHelpers
+  include Chef::Rails::NginxHelpers
 end
 
 return if node['rails_apps'].nil?
@@ -33,6 +34,7 @@ node['rails_apps'].each do |app|
       create_rvm_wrapper(env)
       write_init_script(rails_app, env)
       write_nginx_config(rails_app, env)
+      add_under_constraction_site
       deploy_project(rails_app, env)
     end
   end

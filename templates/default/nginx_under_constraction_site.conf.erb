@@ -1,0 +1,16 @@
+server {
+    listen       80;
+    server_name  <%= @urls.join(' ') %>;
+    charset utf-8;
+    root /var/www/under_construction;
+    index index.html;
+
+    location / {
+        gzip_static on;
+        expires max;
+        add_header ETag $1;
+        add_header Cache-Control public;
+        break;
+    }
+
+}
