@@ -181,6 +181,11 @@ class Chef
               action :create
             end
 
+            cookbook_file File.join(release_path, 'public/robots.txt') do
+              source "robots.txt"
+              mode 0644
+            end if env['name'] != 'production'
+
             if env['development_mode'] && env['development_mode'] = true
               template File.join(release_path, 'config/unicorn/chef_unicorn.rb') do
                 source "unicorn_config_development.rb.erb"
