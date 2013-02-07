@@ -22,6 +22,13 @@ class Chef
   module Rails
     module DeployHelpers
 
+      def write_robots_txt(env)
+        cookbook_file File.join(env['folder'], 'shared/config/robots.txt') do
+          source "robots.txt"
+          mode 0644
+        end
+      end
+
       def create_project_link(app, env)
         # Create symlink to home direcory
         link File.join('/home', env['user']['login'], "#{app['id']}_#{env['name']}") do

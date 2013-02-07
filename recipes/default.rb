@@ -28,6 +28,7 @@ node['rails_apps'].each do |app|
     write_database_yaml(env)
     create_database(env['database'], env['vagrant'])
     create_project_link(rails_app, env)
+    write_robots_txt(env)
     if env['vagrant']
       include_recipe "rails::vagrant"
     else
