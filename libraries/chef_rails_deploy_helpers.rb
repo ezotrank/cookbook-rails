@@ -22,6 +22,29 @@ class Chef
   module Rails
     module DeployHelpers
 
+      def create_project_link(app, env)
+        # Create symlink to home direcory
+        link File.join('/home', env['user']['login'], "#{app['id']}_#{env['name']}") do
+          to env['folder']
+          user env['user']['login']
+          group env['user']['login']
+        end
+      end
+
+      def write_unicorn_config(env)
+        template File.join(env['folder'], 'shared/config/chef_unicorn.rb') do
+          source "unicorn_config.rb.erb"
+          variables(
+          :root_folder => env['folder'],
+          :unicorn_workers => env['unicorn_workers']
+          )
+          owner env['user']['login']
+          group env['user']['login']
+          mode "0644"
+          backup false
+        end
+      end
+
       def create_rvm_wrapper(env)
         directory File.join(env['folder'], 'shared/scripts') do
           owner env['user']['login']
@@ -62,7 +85,6 @@ class Chef
         end
       end
 
-
       def create_necessary_folders(env)
         user_name = env['user']['login']
         group_name = env['user']['login']
@@ -92,161 +114,6 @@ class Chef
         end
       end
 
-      def deploy_project(app, env)
-        sql_server_connection_info = { :host => "localhost",
-          :port => 5432,
-          :username => 'postgres',
-          :password => node['postgresql']['password']['postgres']}
-        wrapper_path = File.join(env['folder'], 'shared/scripts/rvm_wrapper.sh')
-        deploy_log = File.join(env['folder'], 'shared/log/deploy.log')
-        execute "echo -E > #{deploy_log}"
-
-        deploy_revision env['folder'] do
-          repo app['repo']
-          revision env['revision']
-          user env['user']['login']
-          group env['user']['login']
-          enable_submodules true
-          environment({
-                        "RAILS_ENV" => env['name'],
-                        "RAILS_GROUPS" => "assets"
-                      })
-          shallow_clone true
-          migrate true
-          migration_command "#{wrapper_path} bundle exec rake db:migrate --trace &>> #{deploy_log}"
-          restart_command "/etc/init.d/#{app['id']}_#{env['name']} restart &>> #{deploy_log}"
-          symlinks "system" => "public/system",
-                   "pids"   => "tmp/pids",
-                   "log"    => "log",
-                   "assets" => "public/assets"
-
-          before_migrate do
-
-            run "git rev-parse HEAD > version"
-
-            execute "Bundle install" do
-              command <<-eos
-                       #{wrapper_path} bundle install --gemfile #{File.join(release_path, 'Gemfile')} \
-                                                      --path #{File.join env['folder'], 'shared/bundle'} \
-                                                      --deployment --without #{env['bundle_without']} &>> #{deploy_log}
-                      eos
-              cwd release_path
-              user env['user']['login']
-              group env['user']['login']
-            end
-
-            postgresql_database_user "#{env['database']['username']}" do
-              connection sql_server_connection_info
-              password "#{env['database']['password']}"
-              action :create
-            end
-
-            execute "stop application service - #{app['id']}_#{env['name']} stop" do
-              command "/etc/init.d/#{app['id']}_#{env['name']} stop &>> #{deploy_log}"
-              only_if do
-                ::File.exist?("/etc/init.d/#{app['id']}_#{env['name']}") &&
-                  ::File.exist?(File.join(env['folder'], 'shared/pids/unicorn.pid'))
-              end
-            end if env['flush_db'] && env['flush_db'] == true
-
-            postgresql_database env['database']['name'] do
-              connection sql_server_connection_info
-              owner env['database']['username']
-              action (env['flush_db'] && env['flush_db'] == true) ? [:drop, :create] : [:create]
-            end
-
-          end
-
-          before_restart do
-
-            execute "Load seed data" do
-              command "#{wrapper_path} bundle exec rake RAILS_ENV=#{env['name']} db:seed --trace &>> #{deploy_log}"
-              cwd release_path
-              user env['user']['login']
-              group env['user']['login']
-            end if env['load_seed'] && env['load_seed'] == true
-
-            execute "Load sample data" do
-              command "#{wrapper_path} bundle exec rake RAILS_ENV=#{env['name']} db:load_sample --trace &>> #{deploy_log}"
-              cwd release_path
-              user env['user']['login']
-              group env['user']['login']
-            end if env['load_sample'] && env['load_sample'] == true
-
-
-            directory File.join(release_path, 'config/unicorn') do
-              owner env['user']['login']
-              group env['user']['login']
-              mode 0755
-              action :create
-            end
-
-            cookbook_file File.join(release_path, 'public/robots.txt') do
-              source "robots.txt"
-              mode 0644
-            end if env['name'] != 'production'
-
-            if env['development_mode'] && env['development_mode'] = true
-              template File.join(release_path, 'config/unicorn/chef_unicorn.rb') do
-                source "unicorn_config_development.rb.erb"
-                variables(
-                :root_folder => env['folder'],
-                :unicorn_workers => env['unicorn_workers']
-                )
-                owner env['user']['login']
-                group env['user']['login']
-                mode "0644"
-                backup false
-              end
-            else
-              # Update Unicorn config
-              template File.join(release_path, 'config/unicorn/chef_unicorn.rb') do
-                source "unicorn_config.rb.erb"
-                variables(
-                :root_folder => env['folder'],
-                :unicorn_workers => env['unicorn_workers']
-                )
-                owner env['user']['login']
-                group env['user']['login']
-                mode "0644"
-                backup false
-              end
-
-              # Assets precompile
-              # We should recompile assets when count of all releases < 2,
-              # if shared assets folder is blank and if in new relase has
-              # something new in folders vendor/assets or app/assets
-              if all_releases.size < 2 || `ls #{env['folder']}/shared/assets|wc -l`.to_i <= 0 ||
-                  `cd #{release_path} && git log $(cat #{previous_release_path}/version).. vendor/assets app/assets | wc -l`.to_i > 0
-                Chef::Log.info "We found changes in assets, let's recompile their"
-                run "#{wrapper_path} bundle exec rake assets:precompile --trace &>> #{deploy_log}"
-              else
-                Chef::Log.info "Not changes in assets"
-              end
-            end
-
-          end
-
-          after_restart do
-
-            # Update crontab
-            run "Update crontab" do
-              command "#{wrapper_path} bundle exec whenever -w #{env['folder']}/current &>> #{deploy_log}"
-              only_if { ::File.exist?("#{release_path}/config/schedule.rb") &&
-                "cd #{release_path} && #{wrapper_path} bundle list| grep whenever" }
-            end
-
-            # Create symlink to home direcory
-            link File.join('/home', env['user']['login'], "#{app['id']}_#{env['name']}") do
-              to env['folder']
-              user env['user']['login']
-              group env['user']['login']
-            end
-
-          end
-
-        end
-      end
     end
   end
 end

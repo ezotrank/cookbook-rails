@@ -8,9 +8,8 @@ end
 
 return if node['rails_apps'].nil?
 
-include_recipe "postgresql::ruby"
-
 # Install all rubies versions from all rails apps
+install_database_ruby
 install_rubies
 install_imagemagick
 
@@ -28,14 +27,14 @@ node['rails_apps'].each do |app|
     create_necessary_folders(env)
     write_database_yaml(env)
     create_database(env['database'], env['vagrant'])
+    create_project_link(rails_app, env)
     if env['vagrant']
       include_recipe "rails::vagrant"
     else
       create_rvm_wrapper(env)
       write_init_script(rails_app, env)
       write_nginx_config(rails_app, env)
-      add_under_constraction_site
-      deploy_project(rails_app, env)
+      write_unicorn_config(env)
     end
   end
 end

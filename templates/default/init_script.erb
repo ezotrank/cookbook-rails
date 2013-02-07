@@ -4,7 +4,7 @@
 #
 # chkconfig:   - 85 15
 #
-# config:      <%= File.join(@root_folder, '/current/config/unicorn/chef_unicorn.rb') %>
+# config:      <%= File.join(@root_folder, '/shared/chef_unicorn.rb') %>
 # pidfile:     <%= File.join(@root_folder, '/shared/pids/unicorn.pid') %>
 
 # Source function library.
@@ -22,10 +22,10 @@ set -e
 # Change these to match your app:
 APP_NAME="<%= @application_name %>"
 APP_ROOT="<%= File.join(@root_folder, 'current') %>"
-PID="<%= File.join(@root_folder, '/shared/pids/unicorn.pid') %>"
+PID="<%= File.join(@root_folder, 'shared/pids/unicorn.pid') %>"
 ENV="<%= @rails_env %>"
 
-UNICORN_OPTS="-D -E $ENV -c $APP_ROOT/config/unicorn/chef_unicorn.rb"
+UNICORN_OPTS="-D -E $ENV -c <%= File.join(@root_folder, 'shared/config/chef_unicorn.rb') %>"
 
 SET_PATH="cd $APP_ROOT"
 CMD="$SET_PATH; ../../shared/scripts/rvm_wrapper.sh bundle exec unicorn $UNICORN_OPTS"

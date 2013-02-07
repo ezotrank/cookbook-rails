@@ -46,18 +46,6 @@ class Chef
 	    append true
 	  end
 	end if params['groups']
-
-        execute "add id_rsa.pub" do
-          command <<-EOF
-            echo "#{params['id_rsa']}" > .ssh/id_dsa && chmod 0600 .ssh/id_dsa; \
-            echo "#{params['id_rsa_pub']}" > .ssh/id_dsa.pub && chmod 0644 .ssh/id_dsa.pub
-          EOF
-          user params['login']
-          group params['login']
-          cwd "/home/#{params['login']}"
-          # OPTIMIZE
-          not_if { ::FileTest.exist?(".ssh/id_dsa") && ::FileTest.exist?(".ssh/id_dsa.pub") }
-        end
       end
 
       # Define default user ruby
@@ -70,8 +58,12 @@ class Chef
 	  template tmp_file do
 	    source "default_user_ruby.erb"
 	    variables({ :ruby_version => ruby_version })
+            mode '0755'
 	  end
-	  %x[cat #{tmp_file}| tee -a #{bashrc}]
+          execute "Append default ruby version to user" do
+            command "cat #{tmp_file} | tee -a #{bashrc} &>/dev/null"
+            user user
+          end
 	  FileUtils.rm_rf tmp_file
 	end
       end
