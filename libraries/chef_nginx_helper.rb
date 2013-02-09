@@ -1,5 +1,5 @@
 #
-# Cookbook Name:: nginx
+# Cookbook Name:: rails
 #
 # Author:: Maxim Kremenev <ezo@kremenev.com>
 #

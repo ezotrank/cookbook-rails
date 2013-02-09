@@ -11,8 +11,10 @@ depends 'database'
 depends 'postgresql'
 depends 'mysql'
 depends 'nginx'
+depends 'rvm'
 
 supports "centos"
+supports "ubuntu"
+supports "debian"
 
-recommends "rvm"
 recommends "yum"

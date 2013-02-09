@@ -4,14 +4,15 @@ class Chef::Recipe
   include Chef::Rails::DeployHelpers
   include Chef::Rails::PackagesHelpers
   include Chef::Rails::NginxHelpers
+  include Chef::Rails::SphinxHelpers
 end
 
 return if node['rails_apps'].nil?
 
-# Install all rubies versions from all rails apps
-install_database_ruby
-install_rubies
-install_imagemagick
+include_recipe 'rails::install_database_ruby'
+include_recipe 'rails::install_rubies'
+include_recipe 'rails::install_v8'
+include_recipe 'rails::install_imagemagick'
 
 node['rails_apps'].each do |app|
 
@@ -29,6 +30,7 @@ node['rails_apps'].each do |app|
     create_database(env['database'], env['vagrant'])
     create_project_link(rails_app, env)
     write_robots_txt(env)
+    write_sphinx_config(env) if env['sphinx']
     if env['vagrant']
       include_recipe "rails::vagrant"
     else

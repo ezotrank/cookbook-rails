@@ -20,18 +20,27 @@
 
 class Chef
   module Rails
-    module PackagesHelpers
-      def install_rvm_wrapper(env, path)
-        template File.join(path, 'script/rvm_wrapper.sh') do
-          source "rvm_wrapper.sh.erb"
-          variables(:ruby_version => env['ruby_version'])
+    module SphinxHelpers
+      def write_sphinx_config(env)
+        directory File.join(env['folder'], 'shared/sphinx_index') do
           owner env['user']['login']
           group env['user']['login']
-          mode "0755"
-          backup false
+          mode 00755
         end
-      end
 
+        template File.join(env['folder'], 'shared/config/sphinx.yml') do
+          source "sphinx.yml.erb"
+          variables(
+          env: env['name'],
+          port: env['sphinx']['port'],
+          root_folder: env['folder']
+          )
+          owner 'root'
+          group 'root'
+          mode "0644"
+        end
+
+      end
     end
   end
 end

@@ -88,7 +88,7 @@ class Chef
 
           mysql_database "grant permission to createdb for vagrant user" do
             connection sql_server_connection_info
-            sql "GRANT ALL PRIVILEGES ON *.* TO '#{database['username']}'@'%' WITH GRANT OPTION;"
+            sql "GRANT ALL PRIVILEGES ON *.* TO '#{database['username']}'@'localhost' WITH GRANT OPTION;"
             action :query
           end if vagrant
         end

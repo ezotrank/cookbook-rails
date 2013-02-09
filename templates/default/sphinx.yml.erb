@@ -1,0 +1,17 @@
+<%= @env %>:
+  sql_range_step: 10000000
+  enable_star: 1
+  min_infix_len: 1
+  morphology: stem_en
+  mem_limit: 128M
+  max_matches: 25000
+  port: <%= @port %>
+  searchd_file_path: "<%= File.join(@root_folder, "shared/sphinx_index") %>"
+  bin_path: "/usr/local/bin"
+  morphology: stem_ru
+  enable_star: true
+  config_file: "<%= File.join(@root_folder, "shared/config/sphinx.conf") %>"
+  searchd_log_file: "<%= File.join(@root_folder, "shared/log/sphinx.log") %>"
+  query_log_file: "<%= File.join(@root_folder, "shared/log/sphinx.query.log") %>"
+  pid_file: "<%= File.join(@root_folder, "shared/pids/sphinx.pid") %>"
+
