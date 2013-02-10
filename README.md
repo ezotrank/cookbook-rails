@@ -96,3 +96,17 @@ Where:
 
 Usage
 =====
+
+It's easy to use, just create data bag and include his name to
+rails_app. After cookbook was executed we get a system with the
+following:
+
+* Install stable version rvm with included all rubies version than we
+  describe in data bag. Rvm be installed as systemwide and ruby too.
+* Creating required users.
+* Creating neded foler like `/var/www/app1` with included `database.yml`
+  and `rvm_wrapper.sh` and `unicorn_chef.rb` - unicorn config for
+  start rails app.
+* Install nginx, creating config for this app and create init.d script
+  for start/stop/restart/reload rails app in `/etc/init.d/app1_production`
+ 
