@@ -5,6 +5,10 @@ end
 databases.uniq.each do |database|
   case database
   when "mysql" then include_recipe "mysql::ruby"
-  when "postgresql" then include_recipe "postgresql::ruby"
+  when "postgresql"
+    if(node['postgresql']['enable_pgdg_yum'])
+      include_recipe 'postgresql::yum_pgdg_postgresql'
+    end
+    include_recipe "postgresql::ruby"
   end
 end

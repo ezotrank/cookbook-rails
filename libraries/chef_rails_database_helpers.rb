@@ -36,7 +36,8 @@ class Chef
           :env => env['name'],
           :username => env['database']['username'],
           :password => env['database']['password'],
-          :name => env['database']['name']
+          :name => env['database']['name'],
+          :template => env['database']['template']
           )
         end
       end

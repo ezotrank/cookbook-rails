@@ -12,7 +12,7 @@ return if node['rails_apps'].nil?
 include_recipe 'rails::install_database_ruby'
 include_recipe 'rails::install_rubies'
 include_recipe 'rails::install_v8'
-include_recipe 'rails::install_imagemagick'
+include_recipe 'rails::install_ext_packages'
 
 node['rails_apps'].each do |app|
 
