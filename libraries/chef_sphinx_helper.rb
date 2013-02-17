@@ -31,9 +31,9 @@ class Chef
         template File.join(env['folder'], 'shared/config/sphinx.yml') do
           source "sphinx.yml.erb"
           variables(
-          env: env['name'],
-          port: env['sphinx']['port'],
-          root_folder: env['folder']
+            :env => env['name'],
+            :port => env['sphinx']['port'],
+            :root_folder => env['folder']
           )
           owner 'root'
           group 'root'

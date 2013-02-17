@@ -48,26 +48,6 @@ class Chef
 	end if params['groups']
       end
 
-      # Define default user ruby
-      def default_user_ruby(user, ruby_version)
-	find_string = "export RVM_DEFAULT=#{ruby_version}"
-	bashrc = File.join("/home", user, ".bashrc")
-
-	if %x[grep "#{find_string}" #{bashrc}].empty?
-	  tmp_file = "/tmp/#{user}_#{ruby_version}"
-	  template tmp_file do
-	    source "default_user_ruby.erb"
-	    variables({ :ruby_version => ruby_version })
-            mode '0755'
-	  end
-          execute "Append default ruby version to user" do
-            command "cat #{tmp_file} | tee -a #{bashrc} &>/dev/null"
-            user user
-          end
-	  FileUtils.rm_rf tmp_file
-	end
-      end
-
     end
   end
 end

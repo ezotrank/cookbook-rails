@@ -25,7 +25,7 @@ class Chef
       def write_robots_txt(env)
         cookbook_file File.join(env['folder'], 'shared/config/robots.txt') do
           source "robots.txt"
-          mode 0644
+          mode 00644
         end
       end
 
@@ -47,7 +47,7 @@ class Chef
           )
           owner env['user']['login']
           group env['user']['login']
-          mode "0644"
+          mode 00644
           backup false
         end
       end
@@ -65,7 +65,7 @@ class Chef
           variables(:ruby_version => env['ruby_version'])
           owner env['user']['login']
           group env['user']['login']
-          mode "0755"
+          mode 00755
           backup false
         end
       end
@@ -82,7 +82,7 @@ class Chef
           )
           owner env['user']['login']
           group env['user']['login']
-          mode "0755"
+          mode 00755
           backup false
         end
 
@@ -99,22 +99,29 @@ class Chef
         directory "/var/www" do
           owner "root"
           group "root"
-          mode "0755"
+          mode 00755
           action :create
         end
 
         directory env['folder'] do
           owner user_name
           group group_name
-          mode "0755"
+          mode 00755
           action :create
         end
 
-        ['shared', 'shared/log', 'shared/system', 'shared/pids', 'shared/config', 'shared/assets'].each do |folder_name|
+        directory File.join(env['folder'], 'releases') do
+          owner user_name
+          group group_name
+          mode 00755
+          action :create
+        end
+
+        ['shared', 'shared/log', 'shared/system', 'shared/pids', 'shared/config'].each do |folder_name|
           directory File.join(env['folder'], folder_name) do
             owner user_name
             group group_name
-            mode "0755"
+            mode 00755
             recursive true
             action :create
           end

@@ -24,7 +24,6 @@ node['rails_apps'].each do |app|
       ssh_strick_key(env['user']['login'])
     end
 
-    default_user_ruby(env['user']['login'], env['ruby_version'])
     create_necessary_folders(env)
     write_database_yaml(env)
     create_database(env['database'], env['vagrant'])
