@@ -12,6 +12,7 @@ depends 'postgresql'
 depends 'mysql'
 depends 'nginx'
 depends 'rvm'
+depends 'sudo'
 
 supports "centos"
 supports "ubuntu"

@@ -31,6 +31,15 @@ class Chef
         end
       end
 
+      # Add ability to run/stop/load bluepill by rails app user
+      def bluepill_sudo(login)
+        sudo login do
+          user login
+          commands ['/usr/local/rvm/bin/rvmsudo bluepill']
+          nopasswd true
+        end
+      end
+
       # Just create user
       def create_user(params)
 	rails_account params['login'] do
@@ -38,6 +47,8 @@ class Chef
 	  action [:create, :modify]
 	  ssh_keygen false
 	end
+
+        # bluepill_sudo(params['login'])
 
 	params['groups'].each do |_group|
 	  group _group do

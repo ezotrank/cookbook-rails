@@ -1,3 +1,4 @@
+# Default user variables
 default['user']['home_root']      = "/home"
 default['user']['default_shell']  = "/bin/bash"
 default['user']['manage_home']        = "true"
