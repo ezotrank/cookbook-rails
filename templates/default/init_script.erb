@@ -7,6 +7,7 @@
 # config:      <%= File.join(@root_folder, '/shared/chef_unicorn.rb') %>
 # pidfile:     <%= File.join(@root_folder, '/shared/pids/unicorn.pid') %>
 
+<% if node['platform'] == "centos" %>
 # Source function library.
 . /etc/rc.d/init.d/functions
 
@@ -15,6 +16,7 @@
 
 # Check that networking is up.
 [ "$NETWORKING" = "no" ] && exit 0
+<% end %>
 
 set -u
 set -e

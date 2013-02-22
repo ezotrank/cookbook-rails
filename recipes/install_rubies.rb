@@ -9,7 +9,4 @@ return if rubies.empty?
 rubies = rubies.flatten.uniq
 node.set['rvm']['rubies'] = rubies
 node.set['rvm']['branch']  = "stable"
-node.set['rvm']['global_gems'] = node['rvm']['global_gems'] | [{'name' => 'bluepill'}]
 include_recipe "rvm::system"
-include_recipe 'rvm::gem_package'
-

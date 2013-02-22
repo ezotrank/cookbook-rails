@@ -25,6 +25,8 @@ class Chef
       def write_robots_txt(env)
         cookbook_file File.join(env['folder'], 'shared/config/robots.txt') do
           source "robots.txt"
+          owner env['user']['login']
+          group env['user']['login']
           mode 00644
         end
       end

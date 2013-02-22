@@ -22,16 +22,15 @@ class Chef
   module Rails
     module PackagesHelpers
       def install_rvm_wrapper(env, path)
-        template File.join(path, 'script/rvm_wrapper.sh') do
-          source "rvm_wrapper.sh.erb"
-          variables(:ruby_version => env['ruby_version'])
-          owner env['user']['login']
-          group env['user']['login']
-          mode "0755"
-          backup false
-        end
+	template File.join(path, 'script/rvm_wrapper.sh') do
+	  source "rvm_wrapper.sh.erb"
+	  variables(:ruby_version => env['ruby_version'])
+	  owner env['user']['login']
+	  group env['user']['login']
+	  mode "0755"
+	  backup false
+	end
       end
-
     end
   end
 end

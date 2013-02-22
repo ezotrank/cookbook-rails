@@ -35,8 +35,8 @@ class Chef
             :port => env['sphinx']['port'],
             :root_folder => env['folder']
           )
-          owner 'root'
-          group 'root'
+          owner env['user']['login']
+          group env['user']['login']
           mode "0644"
         end
 
