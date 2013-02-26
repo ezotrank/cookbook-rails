@@ -13,6 +13,7 @@ depends 'mysql'
 depends 'nginx'
 depends 'rvm'
 depends 'sudo'
+depends 'build-essential'
 
 supports "centos"
 supports "ubuntu"
