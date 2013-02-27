@@ -4,13 +4,10 @@ class Chef::Recipe
   include Chef::Rails::DeployHelpers
   include Chef::Rails::PackagesHelpers
   include Chef::Rails::NginxHelpers
-  include Chef::Rails::SphinxHelpers
 end
 
 return if node['rails_apps'].nil?
 
-include_recipe 'rails::install_database_ruby'
-include_recipe 'rails::install_rubies'
 include_recipe 'rails::install_v8'
 include_recipe 'rails::install_ext_packages'
 
@@ -26,17 +23,13 @@ node['rails_apps'].each do |app|
 
     create_necessary_folders(env)
     write_database_yaml(env)
-    create_database(env['database'], env['vagrant'])
+
     create_project_link(rails_app, env)
     write_robots_txt(env)
-    write_sphinx_config(env) if env['sphinx']
-    if env['vagrant']
-      include_recipe "rails::vagrant"
-    else
-      create_rvm_wrapper(env)
-      write_init_script(rails_app, env)
-      write_nginx_config(rails_app, env)
-      write_unicorn_config(env)
-    end
+
+    create_rvm_wrapper(env)
+    write_init_script(rails_app, env)
+    write_nginx_config(rails_app, env)
+    write_unicorn_config(env)
   end
 end

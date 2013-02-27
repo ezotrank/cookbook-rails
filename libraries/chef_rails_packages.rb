@@ -24,7 +24,6 @@ class Chef
       def install_rvm_wrapper(env, path)
 	template File.join(path, 'script/rvm_wrapper.sh') do
 	  source "rvm_wrapper.sh.erb"
-	  variables(:ruby_version => env['ruby_version'])
 	  owner env['user']['login']
 	  group env['user']['login']
 	  mode "0755"

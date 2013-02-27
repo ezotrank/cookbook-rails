@@ -32,68 +32,8 @@ class Chef
           source template_file
           owner env['user']['login']
           group env['user']['login']
-          variables(
-          :env => env['name'],
-          :username => env['database']['username'],
-          :password => env['database']['password'],
-          :name => env['database']['name'],
-          :template => env['database']['template']
-          )
+          variables(:env => env['name'], :vars => env['database'])
         end
-      end
-
-      def create_database(database, vagrant=false)
-        db_name, port, username, password = case database['adapter']
-                                            when 'mysql'
-                                              [ 'mysql', 3306, 'root', node['mysql']['server_root_password']]
-                                            when 'postgresql'
-                                              [ 'postgresql', 5432, 'postgres', node['postgresql']['password']['postgres'] ]
-                                            end
-
-        sql_server_connection_info = { :host => "localhost",
-                                       :port => port,
-                                       :username => username,
-                                       :password => password }
-
-        if db_name == 'postgresql'
-          postgresql_database_user "#{database['username']}" do
-            connection sql_server_connection_info
-            password "#{database['password']}"
-            action :create
-          end
-
-          postgresql_database database['name'] do
-            connection sql_server_connection_info
-            owner database['username']
-            action :create
-          end
-
-          postgresql_database "grant permission to createdb for vagrant user" do
-            connection sql_server_connection_info
-            sql "ALTER USER #{database['username']} SUPERUSER;"
-            action :query
-          end if vagrant
-
-        else
-          mysql_database_user "#{database['username']}" do
-            connection sql_server_connection_info
-            password "#{database['password']}"
-            action :create
-          end
-
-          mysql_database database['name'] do
-            connection sql_server_connection_info
-            owner database['username']
-            action :create
-          end
-
-          mysql_database "grant permission to createdb for vagrant user" do
-            connection sql_server_connection_info
-            sql "GRANT ALL PRIVILEGES ON *.* TO '#{database['username']}'@'localhost' WITH GRANT OPTION;"
-            action :query
-          end if vagrant
-        end
-
       end
 
     end
